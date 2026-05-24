@@ -2,7 +2,7 @@
 
 Project-level notes for future Claude sessions. The TL;DR: this is a faithful interpreter for the **1985 Agat dialect** of Rapira (not the modern *Rapture* dialect). When in doubt about language semantics, the source of truth order is:
 
-1. [`RAPIRA.MD`](./RAPIRA.MD) — the canonical 1985 spec, in Russian
+1. [`RAPIRA.md`](./RAPIRA.md) — the canonical 1985 spec, in Russian
 2. [`SPEC.md`](./SPEC.md) — what *this* implementation actually does, including documented deviations
 3. The code
 
@@ -57,7 +57,7 @@ tests/
 
 examples/                .rap files for the CLI; not the same as tests/snippets/
 
-RAPIRA.MD                the 1985 spec
+RAPIRA.md                the 1985 spec
 SPEC.md                  this implementation's contract
 ```
 
@@ -136,7 +136,7 @@ Host-free natives (math, predicates, sequence ops) go in `defineNativeFns` at th
 3. Wire `parseStatement` (or `parseAtom` for expressions) in `src/parser.ts`.
 4. Implement evaluation in `src/interpreter.ts`.
 5. Tests in the matching `tests/*.test.ts`.
-6. If it's a feature mentioned in `RAPIRA.MD` but parts are deferred, say so in `SPEC.md`'s "Deferred from MVP" section. Be honest about what's actually working.
+6. If it's a feature mentioned in `RAPIRA.md` but parts are deferred, say so in `SPEC.md`'s "Deferred from MVP" section. Be honest about what's actually working.
 
 ## Honest deferrals
 
