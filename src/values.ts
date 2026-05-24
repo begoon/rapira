@@ -235,6 +235,17 @@ export function withIndexAssigned(obj: RValue, indices: RValue[], value: RValue)
   throw new Error(`Индексное присваивание требует кортеж или текст (got ${typeName(obj)})`);
 }
 
+/** Return a new record with one field updated/added. Field name should already
+ *  be in canonical form (upper-case via `normalize`). */
+export function withFieldAssigned(obj: RValue, field: string, value: RValue): RValue {
+  if (obj.kind !== 'record') {
+    throw new Error(`Присваивание полю требует запись (got ${typeName(obj)})`);
+  }
+  const next = new Map(obj.fields);
+  next.set(field, value);
+  return { kind: 'record', fields: next };
+}
+
 export function withSliceAssigned(obj: RValue, from: number | null, to: number | null, value: RValue): RValue {
   if (obj.kind === 'tuple') {
     if (value.kind !== 'tuple') throw new Error('Срезу кортежа можно присвоить только кортеж');

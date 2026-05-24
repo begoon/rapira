@@ -63,7 +63,7 @@ Block comments, can span lines, can contain newlines:
 - **Text** (string): `"…"`. Internal `"` is doubled: `"ЛЕДОКОЛ ""АЛЬБАТРОС"""`.
 - **Tuple** (кортеж — ordered, indexable): `<e1, e2, …>` and the empty tuple `< >`.
 - **Set** (множество — unordered, duplicates collapse, `+ * - ИЗ`): `<* e1, e2, … *>` and the empty set `<* *>`.
-- **Record** (запись — named fields, accessed by `.field`): `<¤ имя1: v1, имя2: v2 ¤>`. The ASCII-keyboard form `<$ имя1: v1, имя2: v2 $>` is also accepted: in КОИ-8 the `$` glyph slot was remapped to `¤` on Soviet hardware, so they refer to the same delimiter. Parsed in this MVP; full interpreter support deferred.
+- **Record** (запись — named fields, accessed by `.field`): `<¤ имя1: v1, имя2: v2 ¤>`. The ASCII-keyboard form `<$ имя1: v1, имя2: v2 $>` is also accepted: in КОИ-8 the `$` glyph slot was remapped to `¤` on Soviet hardware, so they refer to the same delimiter. Field names are normalised to upper-case for storage/lookup. Read a field with `Р.имя`; assign with `значение -> Р.имя`. Reading an absent field returns `.пусто`. Records compare with universal `=` field-wise.
 - **Empty constant**: `.пусто` (the value of an uninitialised name).
 
 ## Operators (Appendix 1)
@@ -353,5 +353,4 @@ Default canvas is 256 × 256 (Агат-7 high-res), origin top-left, y-down — 
 - File I/O (`ОТКРЫТЬ`, `ЗАКРЫТЬ`, `ВВОД ИЗ ФАЙЛА`, …) — parsed, then rejected at runtime
 - Modules (`СТАРТ`, `ФИНИШ`, `ДОСТУПНО`, `МОДУЛЬ`)
 - Robic-mode predicate sets (`'[' … ']'` blocks)
-- Records — parsed, evaluation deferred
 - Output formatters (`:width:precision`) — parsed, formatting deferred to a simple default

@@ -9,7 +9,7 @@ import {
   type RValue, type NativeFn,
   equals, compareNumeric, isMember, len, isTruthy,
   display, displayFormatted, typeName, numericResult,
-  indexValue, sliceValue, withIndexAssigned, withSliceAssigned,
+  indexValue, sliceValue, withIndexAssigned, withSliceAssigned, withFieldAssigned,
 } from './values.ts';
 import { RuntimeError, type Pos } from './errors.ts';
 import { type GraphicsSink, NullSink, BufferingSink } from './graphics.ts';
@@ -328,8 +328,11 @@ export class Interpreter {
         this.lvalueWrite(target.obj, withSliceAssigned(cur, a, b, value), env, pos);
         return;
       }
-      case 'Field':
-        throw new RuntimeError('Запись (record) ещё не поддерживается в исполнителе', pos);
+      case 'Field': {
+        const cur = this.lvalueRead(target.obj, env);
+        this.lvalueWrite(target.obj, withFieldAssigned(cur, target.field, value), env, pos);
+        return;
+      }
     }
   }
 
@@ -346,8 +349,13 @@ export class Interpreter {
         const b = target.to   ? this.toIntOrNull(this.evalExpr(target.to,   env)) : null;
         return sliceValue(obj, a, b);
       }
-      case 'Field':
-        throw new RuntimeError('Запись (record) ещё не поддерживается');
+      case 'Field': {
+        const obj = this.lvalueRead(target.obj, env);
+        if (obj.kind !== 'record') {
+          throw new RuntimeError(`.${target.field} требует запись (got ${typeName(obj)})`);
+        }
+        return obj.fields.get(target.field) ?? EMPTY;
+      }
     }
   }
 

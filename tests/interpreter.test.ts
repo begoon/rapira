@@ -235,6 +235,55 @@ describe('interpreter (Agat)', () => {
     expect(run('ВЫВОД БПС : "А", "Б";').out).toBe('АБ');
   });
 
+  test('records: construct, read field, equality', () => {
+    const out = run(`
+      <¤ ФАМ: "Петров", ИМЯ: "Иван" ¤> -> АНКЕТА;
+      ? АНКЕТА.ФАМ, " ", АНКЕТА.ИМЯ;
+      ? АНКЕТА = <¤ ФАМ: "Петров", ИМЯ: "Иван" ¤>;
+      ? АНКЕТА = <¤ ФАМ: "Иванов", ИМЯ: "Иван" ¤>;
+    `).out;
+    expect(out).toBe('Петров Иван\nда\nнет\n');
+  });
+
+  test('records: field assignment', () => {
+    const out = run(`
+      <¤ ФАМ: "Петров", ИМЯ: "Иван" ¤> -> АНКЕТА;
+      "Сидоров" -> АНКЕТА.ФАМ;
+      ? АНКЕТА.ФАМ, " ", АНКЕТА.ИМЯ;
+    `).out;
+    expect(out).toBe('Сидоров Иван\n');
+  });
+
+  test('records: $ alias and ¤ produce same value', () => {
+    const out = run(`
+      <$ А: 1, Б: 2 $> -> Х;
+      <¤ А: 1, Б: 2 ¤> -> Y;
+      ? Х = Y;
+    `).out;
+    expect(out).toBe('да\n');
+  });
+
+  test('records: field on missing field returns .пусто', () => {
+    const out = run(`
+      <¤ А: 1 ¤> -> Р;
+      ? Р.А = .пусто;
+      ? Р.Б = .пусто;
+    `).out;
+    expect(out).toBe('нет\nда\n');
+  });
+
+  test('records: inout parameter with .field target', () => {
+    const out = run(`
+      ПРОЦ ПОВЫСИТЬ (<=> Х);
+         Х + 1 -> Х
+      КНЦ;
+      <¤ СЧЁТ: 41 ¤> -> С;
+      ПОВЫСИТЬ(С.СЧЁТ);
+      ? С.СЧЁТ;
+    `).out;
+    expect(out).toBe('42\n');
+  });
+
   test('full canonical example: factorials in a loop', () => {
     const src = `
       ФУНК ФАКТ (Н) ;
