@@ -1,0 +1,68 @@
+:root {
+  --bg: #1d1f21;
+  --panel: #2a2d31;
+  --border: #3c4046;
+  --fg: #e7e9ec;
+  --muted: #9aa0a6;
+  --accent: #f0b342;
+  --error: #ff6b6b;
+
+  font-family: ui-monospace, "SF Mono", "Cascadia Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+  font-size: 14px;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+
+html, body, #app { height: 100%; margin: 0; }
+
+body { background: var(--bg); color: var(--fg); }
+
+.layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: auto 1fr;
+  height: 100%;
+  gap: 1px;
+  background: var(--border);
+}
+
+.header {
+  grid-column: 1 / -1;
+  padding: 6px 12px;
+  background: var(--panel);
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+  border-bottom: 1px solid var(--border);
+}
+.header h1 { margin: 0; font-size: 14px; color: var(--accent); font-weight: 600; }
+.header .status { color: var(--muted); font-size: 12px; }
+.header .status.error { color: var(--error); }
+
+.pane { background: var(--bg); overflow: hidden; display: flex; flex-direction: column; }
+.pane .pane-title { padding: 4px 10px; background: var(--panel); color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; }
+
+.editor-pane .cm-editor { height: 100%; font-size: 14px; }
+
+.output-pane { display: grid; grid-template-rows: 1fr auto; }
+.text-output {
+  white-space: pre;
+  padding: 10px 12px;
+  overflow: auto;
+  font-size: 13px;
+  font-family: inherit;
+}
+.canvas-host {
+  border-top: 1px solid var(--border);
+  background: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+}
+.canvas-host canvas {
+  display: block;
+  image-rendering: pixelated;
+  background: #ffffff;
+}
