@@ -12,17 +12,12 @@
     "test": "bun test",
     "cli": "bun run cli/index.ts",
     "typecheck": "tsc --noEmit",
-    "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview"
+    "dev": "bun run scripts/web-build.ts --dev",
+    "build": "bun run scripts/web-build.ts"
   },
   "devDependencies": {
-    "@sveltejs/vite-plugin-svelte": "^7.1.2",
     "@types/bun": "latest",
-    "svelte": "^5.55.9",
-    "svelte-check": "^4.4.8",
-    "typescript": "^5.6.0",
-    "vite": "^8.0.14"
+    "typescript": "^5.6.0"
   },
   "dependencies": {
     "@codemirror/autocomplete": "^6.20.2",

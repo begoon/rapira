@@ -6,16 +6,16 @@
  * cancel, it terminates this worker and spawns a fresh one.
  */
 
-import { tokenize } from '../../src/lexer.ts';
-import { parse } from '../../src/parser.ts';
-import { Interpreter, type Host } from '../../src/interpreter.ts';
-import { BufferingSink } from '../../src/graphics.ts';
-import { RapiraError } from '../../src/errors.ts';
+import { tokenize } from '../src/lexer.ts';
+import { parse } from '../src/parser.ts';
+import { Interpreter, type Host } from '../src/interpreter.ts';
+import { BufferingSink } from '../src/graphics.ts';
+import { RapiraError } from '../src/errors.ts';
 
 export type WorkerIn  = { kind: 'run'; source: string };
 export type WorkerOut =
-  | { kind: 'done';  output: string; gfx: import('../../src/graphics.ts').GfxEvent[]; durationMs: number }
-  | { kind: 'error'; message: string; line?: number; col?: number; output: string; gfx: import('../../src/graphics.ts').GfxEvent[] };
+  | { kind: 'done';  output: string; gfx: import('../src/graphics.ts').GfxEvent[]; durationMs: number }
+  | { kind: 'error'; message: string; line?: number; col?: number; output: string; gfx: import('../src/graphics.ts').GfxEvent[] };
 
 class WorkerHost implements Host {
   out = '';
