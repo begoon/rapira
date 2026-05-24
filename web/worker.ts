@@ -20,9 +20,17 @@ export type WorkerOut =
 class WorkerHost implements Host {
   out = '';
   gfx = new BufferingSink();
+  // No `fs` — file ops throw cleanly via interpreter's requireFs check.
   write(s: string): void { this.out += s; }
   writeln(): void { this.out += '\n'; }
   readLine(): string { return ''; }
+  /** Synchronous blocking sleep, valid in a Web Worker via Atomics.wait. */
+  pause(ms: number): void {
+    if (ms <= 0) return;
+    const sab = new SharedArrayBuffer(4);
+    const view = new Int32Array(sab);
+    Atomics.wait(view, 0, 0, ms);
+  }
 }
 
 self.onmessage = (e: MessageEvent<WorkerIn>): void => {

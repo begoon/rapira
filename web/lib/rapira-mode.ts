@@ -119,8 +119,8 @@ const parser: StreamParser<State> = {
 
 const rapiraLanguage = StreamLanguage.define(parser);
 
-const highlightStyle = HighlightStyle.define([
-  { tag: t.keyword,      color: '#c678dd' },
+const darkHighlight = HighlightStyle.define([
+  { tag: t.keyword,      color: '#c678dd', fontWeight: '600' },
   { tag: t.comment,      color: '#5c6370', fontStyle: 'italic' },
   { tag: t.string,       color: '#98c379' },
   { tag: t.number,       color: '#d19a66' },
@@ -128,6 +128,24 @@ const highlightStyle = HighlightStyle.define([
   { tag: t.variableName, color: '#e6e6e6' },
 ]);
 
-export function rapira(): Extension {
-  return [rapiraLanguage, syntaxHighlighting(highlightStyle)];
+// Light-theme palette. Identifier / proc-call colour is deliberately near-
+// black so names like `ВПЕРЕД` and `ЦВЕТ` read as solid text rather than
+// the washed-out grey common with light syntax themes.
+const lightHighlight = HighlightStyle.define([
+  { tag: t.keyword,      color: '#6b21a8', fontWeight: '600' },  // deep purple
+  { tag: t.comment,      color: '#6b7280', fontStyle: 'italic' }, // gray
+  { tag: t.string,       color: '#0f766e' },                     // teal
+  { tag: t.number,       color: '#b45309' },                     // amber
+  { tag: t.operator,     color: '#1d4ed8' },                     // strong blue
+  { tag: t.variableName, color: '#0b0d10' },                     // near-black
+]);
+
+export type RapiraTheme = 'light' | 'dark';
+
+/** Returns the language + theme-appropriate highlight extensions. */
+export function rapira(theme: RapiraTheme = 'light'): Extension {
+  return [
+    rapiraLanguage,
+    syntaxHighlighting(theme === 'dark' ? darkHighlight : lightHighlight),
+  ];
 }

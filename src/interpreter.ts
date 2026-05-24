@@ -29,6 +29,8 @@ export interface Host {
   gfx?: GraphicsSink;
   /** File system; omit to disable file I/O (web playground). */
   fs?: FileSystem;
+  /** Synchronous blocking sleep for ПАУЗА. Optional — tests no-op. */
+  pause?(ms: number): void;
 }
 
 export class BufferedHost implements Host {
@@ -36,9 +38,12 @@ export class BufferedHost implements Host {
   inputLines: string[] = [];
   gfx: BufferingSink = new BufferingSink();
   fs: InMemoryFileSystem = new InMemoryFileSystem();
+  /** Captured ПАУЗА durations (ms) so tests can assert without sleeping. */
+  pauses: number[] = [];
   write(s: string): void { this.out += s; }
   writeln(): void { this.out += '\n'; }
   readLine(): string { return this.inputLines.shift() ?? ''; }
+  pause(ms: number): void { this.pauses.push(ms); }
 }
 
 // ---- Control-flow signals (thrown / caught) ----
@@ -50,6 +55,10 @@ const LOOP_EXIT = new LoopExitSignal();
 const EXIT      = new ExitSignal();
 
 // ---- Native built-ins ----
+//
+// Math/text natives have no host dependency; they're registered by the
+// host-free defineNativeFns below. File/sound/timing natives close over
+// the Host and are registered separately in the Interpreter constructor.
 
 function defineNativeFns(env: Env): void {
   const define = (name: string, arity: number | null, fn: NativeFn): void => {
@@ -66,12 +75,16 @@ function defineNativeFns(env: Env): void {
     });
 
   // §Appendix 3, plus a few common-sense aliases.
-  define('АБС', 1, ([a]) => {
+  const absImpl: NativeFn = ([a]) => {
     const x = a!;
     if (x.kind === 'int')  return rInt(Math.abs(x.value));
     if (x.kind === 'real') return rReal(Math.abs(x.value));
     throw new RuntimeError(`АБС ожидает число (got ${typeName(x)})`);
-  });
+  };
+  define('АБС', 1, absImpl);
+  // Latin alias per Appendix 3 (spec lists `ABS` Latin in its table). Both
+  // forms refer to the same operation.
+  define('ABS', 1, absImpl);
   define('ЦЕЛЧ', 1, ([a]) => {
     const x = a!;
     if (x.kind === 'int')  return x;
@@ -121,25 +134,85 @@ export class Interpreter {
   /** Top-level env: holds proc/func defs and top-level variable bindings. */
   readonly global = new Env(null);
 
+  /** Current input prompt (set by ПРИГЛ, prepended to each console ВВОД token). */
+  private inputPrompt = '';
+
   constructor(private readonly host: Host) {
     defineNativeFns(this.global);
     registerGraphics(this.global, host.gfx ?? new NullSink());
-    // ПОЗИЦИЯ_В(имя): current 1-based position in the named handle.
-    // Spec §36 only defines a set form; the read form is our addition.
-    this.global.declare('ПОЗИЦИЯ_В', {
-      kind: 'native',
-      name: 'ПОЗИЦИЯ_В',
-      arity: 1,
-      fn: (args): RValue => {
-        const h = args[0];
-        if (!h || h.kind !== 'text') {
-          throw new RuntimeError('ПОЗИЦИЯ_В ожидает текстовое имя файла-метки');
+    this.registerHostNatives();
+  }
+
+  private registerHostNatives(): void {
+    const host = this.host;
+    const env = this.global;
+    const define = (name: string, arity: number | null, fn: NativeFn): void => {
+      env.declare(name, { kind: 'native', name, arity, fn });
+    };
+
+    const requireFsOrThrow = (name: string): FileSystem => {
+      if (!host.fs) {
+        throw new RuntimeError(`${name}: файлы недоступны в этой среде исполнения`);
+      }
+      return host.fs;
+    };
+
+    const handleArg = (v: RValue | undefined, name: string): string => {
+      if (!v || v.kind !== 'text') {
+        throw new RuntimeError(`${name}: имя файла должно быть текстом`);
+      }
+      return v.value;
+    };
+
+    // ПОЗИЦИЯ_В(имя) — read current 1-based file position (our addition)
+    define('ПОЗИЦИЯ_В', 1, ([h]) => rInt(requireFsOrThrow('ПОЗИЦИЯ_В').tell(handleArg(h, 'ПОЗИЦИЯ_В'))));
+
+    // КФ(Ф) — end-of-file check, returns "Д" or "Н" (spec §Appendix 3)
+    define('КФ', 1, ([h]) => rText(requireFsOrThrow('КФ').atEof(handleArg(h, 'КФ')) ? 'Д' : 'Н'));
+
+    // ЧТФ(Ф, N) — read N chars as text (spec §Appendix 3)
+    define('ЧТФ', 2, ([h, n]) => {
+      const fs = requireFsOrThrow('ЧТФ');
+      if (!n || n.kind !== 'int') throw new RuntimeError('ЧТФ: второй аргумент должен быть целым');
+      return rText(fs.readChars(handleArg(h, 'ЧТФ'), n.value));
+    });
+
+    // ПАУЗА(N) — sleep N/10 seconds (spec §Appendix 3)
+    define('ПАУЗА', 1, ([n]) => {
+      if (!n || (n.kind !== 'int' && n.kind !== 'real')) {
+        throw new RuntimeError('ПАУЗА ожидает число');
+      }
+      if (host.pause) host.pause(Math.max(0, Math.round(n.value * 100)));
+      return EMPTY;
+    });
+
+    // ЗВОН() — bell (gfx event 'beep')
+    define('ЗВОН', 0, () => {
+      host.gfx?.emit({ type: 'beep' });
+      return EMPTY;
+    });
+
+    // ЗВУК(N1, N2) — tone: N1 = duration in 1/10 sec, N2 = frequency in Hz
+    define('ЗВУК', 2, ([dur, freq]) => {
+      const toN = (v: RValue | undefined): number => {
+        if (!v || (v.kind !== 'int' && v.kind !== 'real')) {
+          throw new RuntimeError('ЗВУК ожидает числовые аргументы');
         }
-        if (!host.fs) {
-          throw new RuntimeError('Файлы недоступны в этой среде исполнения (нет fs у хоста)');
-        }
-        return rInt(host.fs.tell(h.value));
-      },
+        return v.value;
+      };
+      host.gfx?.emit({
+        type: 'tone',
+        freqHz: Math.max(0, toN(freq)),
+        durationMs: Math.max(0, Math.round(toN(dur) * 100)),
+      });
+      return EMPTY;
+    });
+
+    // ПРИГЛ(Л) — set the input prompt printed before each console ВВОД
+    define('ПРИГЛ', 1, ([s]) => {
+      if (!s || s.kind !== 'text') throw new RuntimeError('ПРИГЛ ожидает текст');
+      this.inputPrompt = s.value;
+      return EMPTY;
     });
   }
 
@@ -345,7 +418,10 @@ export class Interpreter {
     // stdin nor an fs, so all branches do The Right Thing when missing.
     const readLine = s.direction.kind === 'file'
       ? ((): string => this.requireFs(s.pos).readLine(s.direction.kind === 'file' ? s.direction.handle : ''))
-      : ((): string => this.host.readLine());
+      : ((): string => {
+          if (this.inputPrompt && s.direction.kind === 'console') this.host.write(this.inputPrompt);
+          return this.host.readLine();
+        });
 
     if (s.mode === 'texts') {
       for (const t of s.targets) this.evalAssign(t, rText(readLine()), env, s.pos);

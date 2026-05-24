@@ -71,6 +71,22 @@ export class NodeFileSystem implements FileSystem {
     return h.readPos + 1;
   }
 
+  atEof(handle: string): boolean {
+    const h = this.handles.get(handle);
+    if (!h) throw new Error(`файл «${handle}» не открыт`);
+    return h.readPos >= h.contents.length;
+  }
+
+  readChars(handle: string, n: number): string {
+    const h = this.handles.get(handle);
+    if (!h) throw new Error(`файл «${handle}» не открыт`);
+    if (n < 0) throw new Error(`ЧТФ: число литер должно быть ≥ 0 (получено ${n})`);
+    const end = Math.min(h.readPos + n, h.contents.length);
+    const s = h.contents.slice(h.readPos, end);
+    h.readPos = end;
+    return s;
+  }
+
   /** Flush and release every open handle (call on process exit). */
   closeAll(): void {
     for (const handle of this.handles.keys()) this.close(handle);

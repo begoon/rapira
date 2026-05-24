@@ -29,6 +29,11 @@ export interface FileSystem {
   seek(handle: string, position: number): void;
   /** Current 1-based character position (1 .. #file + 1). */
   tell(handle: string): number;
+  /** True if the read cursor is at end-of-file. */
+  atEof(handle: string): boolean;
+  /** Read up to `n` consecutive characters as text, advancing the cursor.
+   *  Returns fewer than `n` characters at EOF; returns '' if already at EOF. */
+  readChars(handle: string, n: number): string;
 }
 
 interface FileEntry {
@@ -104,6 +109,22 @@ export class InMemoryFileSystem implements FileSystem {
     const h = this.handles.get(handle);
     if (!h) throw new Error(`файл «${handle}» не открыт`);
     return h.readPos + 1;
+  }
+
+  atEof(handle: string): boolean {
+    const h = this.handles.get(handle);
+    if (!h) throw new Error(`файл «${handle}» не открыт`);
+    return h.readPos >= h.contents.length;
+  }
+
+  readChars(handle: string, n: number): string {
+    const h = this.handles.get(handle);
+    if (!h) throw new Error(`файл «${handle}» не открыт`);
+    if (n < 0) throw new Error(`ЧТФ: число литер должно быть ≥ 0 (получено ${n})`);
+    const end = Math.min(h.readPos + n, h.contents.length);
+    const s = h.contents.slice(h.readPos, end);
+    h.readPos = end;
+    return s;
   }
 
   /** Read out the persisted store (test helper). */

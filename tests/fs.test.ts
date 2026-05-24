@@ -127,6 +127,41 @@ describe('File I/O', () => {
     `)).toThrow(/≥ 1/);
   });
 
+  test('КФ reports EOF status', () => {
+    const r = runWithFs(`
+      ОТКРЫТЬ "in.txt" КАК Ф;
+      ? КФ("Ф");                    (* expect "Н" — file has content *)
+      ВВОД ИЗ ФАЙЛА Ф ТЕКСТОВ : С;  (* consume the only line + newline *)
+      ? КФ("Ф");                    (* expect "Д" — at EOF *)
+      ЗАКРЫТЬ Ф;
+    `, { 'in.txt': 'hello\n' });
+    expect(r.out).toBe('Н\nД\n');
+  });
+
+  test('ЧТФ reads N characters as text', () => {
+    const r = runWithFs(`
+      ОТКРЫТЬ "in.txt" КАК Ф;
+      ? ЧТФ("Ф", 5);
+      ? ЧТФ("Ф", 100);  (* fewer than 100 left — get what's there *)
+      ? ЧТФ("Ф", 1) = "";
+      ЗАКРЫТЬ Ф;
+    `, { 'in.txt': 'abcdefghij' });
+    expect(r.out).toBe('abcde\nfghij\nда\n');
+  });
+
+  test('ЧТФ + КФ together for file-loop pattern', () => {
+    const r = runWithFs(`
+      ОТКРЫТЬ "in.txt" КАК Ф;
+      "" -> ВСЁ;
+      ПОКА КФ("Ф") = "Н" ::
+         ЧТФ("Ф", 1) + ВСЁ -> ВСЁ
+      ВСЕ;
+      ЗАКРЫТЬ Ф;
+      ? ВСЁ;
+    `, { 'in.txt': 'abc' });
+    expect(r.out).toBe('cba\n');
+  });
+
   test('reading from EOF yields .пусто for ДАННЫХ', () => {
     const r = runWithFs(`
       ОТКРЫТЬ "empty.txt" КАК Ф;

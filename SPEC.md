@@ -260,25 +260,28 @@ In addition to operators, the following are reserved (case-insensitive):
 
 | Spec name | Aliases              | Meaning                              |
 | --------- | -------------------- | ------------------------------------ |
-| `АБС(Х)`  | `abs`                | absolute value                       |
-| `ЦЕЛЧ(Х)` | `entier`             | integer part (truncation)            |
-| `SQRT(Х)` | `КОР`, `sqrt`        | square root                          |
-| `ДСЧ()`   | `random`             | random real in [0; 1)                |
-| `КОД(Л)`  | `ord`                | char code of single-character text   |
-| `АЛФ(N)`  | `chr`                | character for code                   |
-| `ФТЕКСТ(N, Л)` | `make_text`     | text of length N filled with char Л |
-| `ФКОРТ(N, П)` | `make_tuple`     | tuple of N copies of П               |
+| `АБС(Х)`  | `ABS`                | absolute value (spec lists Latin `ABS` in App. 3) |
+| `ЦЕЛЧ(Х)` |                      | integer part (truncation)            |
+| `SQRT(Х)` | `КОР`                | square root                          |
+| `ДСЧ()`   |                      | random real in [0; 1)                |
+| `КОД(Л)`  |                      | char code of single-character text   |
+| `АЛФ(N)`  |                      | character for code                   |
+| `ФТЕКСТ(N, Л)` |                 | text of length N filled with char Л |
+| `ФКОРТ(N, П)`  |                 | tuple of N copies of П               |
+| `КФ(Ф)`        |                 | end-of-file check, returns `"Д"` / `"Н"` |
+| `ЧТФ(Ф, N)`    |                 | next N characters from file as text   |
+| `ПОЗИЦИЯ_В(имя)` |               | current 1-based file position (our addition) |
 
 ### Procedures
 
 I/O & system:
 
-| Name             | Meaning                                  |
-| ---------------- | ---------------------------------------- |
-| `ПАУЗА(N)`       | sleep N/10 seconds                       |
-| `ЗВОН()`         | bell                                     |
-| `ЗВУК(N1, N2)`   | tone of frequency N2 for duration N1     |
-| `ПРИГЛ(Л)`       | set input prompt                         |
+| Name             | Meaning                                              |
+| ---------------- | ---------------------------------------------------- |
+| `ПАУЗА(N)`       | sleep N/10 seconds (CLI: `Bun.sleepSync`; web worker: `Atomics.wait`; tests: recorded, no-op) |
+| `ЗВОН()`         | emits `beep` GfxEvent                                |
+| `ЗВУК(N1, N2)`   | emits `tone` GfxEvent (N1 = duration in 1/10 sec, N2 = freq Hz) |
+| `ПРИГЛ(Л)`       | sets the prompt text printed before each console `ВВОД` |
 
 Graphics (emit events to host `GraphicsSink` — see *Graphics architecture* below):
 

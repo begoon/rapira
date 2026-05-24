@@ -12,9 +12,11 @@
  * at this directory on `main` to deploy.
  */
 
-import { watch, rmSync, mkdirSync } from 'node:fs';
+import { watch, rmSync, mkdirSync, readdirSync, copyFileSync, readFileSync, writeFileSync } from 'node:fs';
+import { basename, join } from 'node:path';
 
 const OUTDIR = 'docs';
+const SNIPPETS_DIR = 'tests/snippets';
 const DEV_PORT = 5173;
 
 const args = process.argv.slice(2);
@@ -66,9 +68,31 @@ async function build(): Promise<boolean> {
     console.error('build failed');
     return false;
   }
+
+  // Copy example snippets (.rap files) and emit an index.json the
+  // playground can fetch to populate the example selector.
+  const examplesOut = join(OUTDIR, 'examples');
+  mkdirSync(examplesOut, { recursive: true });
+  const snippets = readdirSync(SNIPPETS_DIR).filter((f) => f.endsWith('.rap')).sort();
+  const index: { name: string; title: string }[] = [];
+  for (const f of snippets) {
+    copyFileSync(join(SNIPPETS_DIR, f), join(examplesOut, f));
+    const src = readFileSync(join(SNIPPETS_DIR, f), 'utf8');
+    index.push({ name: basename(f, '.rap'), title: titleOf(src, f) });
+  }
+  writeFileSync(join(examplesOut, 'index.json'), JSON.stringify(index, null, 2));
+
   const ms = Math.round(performance.now() - start);
-  console.log(`built ${r1.outputs.length + r2.outputs.length} files → ${OUTDIR}/ in ${ms} ms`);
+  console.log(`built ${r1.outputs.length + r2.outputs.length} bundle files, ${snippets.length} examples → ${OUTDIR}/ in ${ms} ms`);
   return true;
+}
+
+/** Pull a single-line label from the first `(* … *)` comment, otherwise
+ *  derive one from the filename. Keeps the selector readable. */
+function titleOf(src: string, file: string): string {
+  const m = src.match(/\(\*\s*([^*\n]+?)\s*\*\)/);
+  if (m && m[1]) return m[1].length > 60 ? m[1].slice(0, 60) + '…' : m[1];
+  return basename(file, '.rap').replace(/^[0-9]+_/, '').replace(/_/g, ' ');
 }
 
 const ok = await build();

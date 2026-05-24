@@ -80,6 +80,8 @@ class ConsoleHost implements Host {
     // Synchronous one-line read from stdin via Bun. Returns '' at EOF.
     return readLineSync();
   }
+
+  pause(ms: number): void { Bun.sleepSync(ms); }
 }
 
 /** Blocking line read from fd 0. Uses Bun's sync FFI for portability. */

@@ -19,7 +19,11 @@ export type GfxEvent =
   | { type: 'window'; x1: number; y1: number; x2: number; y2: number }
   | { type: 'cursor'; x: number; y: number }
   | { type: 'origin'; x: number; y: number }
-  | { type: 'scale'; sx: number; sy: number };
+  | { type: 'scale'; sx: number; sy: number }
+  // Audio events (from ЗВОН/ЗВУК). The renderer ignores them; the
+  // playground may route them to Web Audio.
+  | { type: 'beep' }
+  | { type: 'tone'; freqHz: number; durationMs: number };
 
 export interface GraphicsSink {
   emit(event: GfxEvent): void;
