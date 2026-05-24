@@ -1,32 +1,60 @@
 {
   "name": "rapira",
-  "version": "0.0.0",
-  "private": true,
+  "version": "0.1.0",
   "license": "MIT",
   "author": "Alexander Demin <alexander@demin.ws>",
+  "description": "Interpreter for РАПИРА — the Soviet educational programming language (1985 Agat dialect).",
   "type": "module",
-  "description": "Interpreter and playground for Rapira (Рапира), the Soviet educational programming language",
-  "module": "src/index.ts",
   "bin": {
-    "rapira": "./cli/index.ts"
+    "rapira": "./dist/rapira.js"
   },
+  "files": [
+    "dist",
+    "examples",
+    "SPEC.md",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "homepage": "https://begoon.github.io/rapira",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/begoon/rapira.git"
+  },
+  "bugs": {
+    "url": "https://github.com/begoon/rapira/issues"
+  },
+  "keywords": [
+    "rapira",
+    "рапира",
+    "agat",
+    "агат",
+    "interpreter",
+    "soviet",
+    "educational",
+    "shkolnitsa",
+    "школьница",
+    "turtle"
+  ],
   "scripts": {
     "test": "bun test",
-    "cli": "bun run cli/index.ts",
     "typecheck": "tsc --noEmit",
+    "cli": "bun run cli/index.ts",
+    "cli:build": "bun run scripts/cli-build.ts",
     "dev": "bun run scripts/web-build.ts --dev",
-    "build": "bun run scripts/web-build.ts"
+    "build": "bun run scripts/web-build.ts",
+    "prepublishOnly": "bun run cli:build && bun test"
   },
   "devDependencies": {
-    "@types/bun": "latest",
-    "typescript": "^5.6.0"
-  },
-  "dependencies": {
     "@codemirror/autocomplete": "^6.20.2",
     "@codemirror/commands": "^6.10.3",
     "@codemirror/language": "^6.12.3",
     "@codemirror/state": "^6.6.0",
     "@codemirror/view": "^6.43.0",
-    "@lezer/highlight": "^1.2.3"
+    "@lezer/highlight": "^1.2.3",
+    "@types/bun": "latest",
+    "typescript": "^5.6.0"
   }
 }

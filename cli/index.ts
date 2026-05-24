@@ -1,4 +1,4 @@
-#!/usr/bin/env bun
+#!/usr/bin/env node
 /**
  * Rapira CLI.
  *
@@ -8,9 +8,13 @@
  * The REPL is line-buffered: statements accumulate until you submit an
  * empty line, then the buffer is executed as one program. Use Ctrl-D
  * (EOF) to quit.
+ *
+ * The shebang says `node` (not `bun`) because npm/npx invokes binaries via
+ * the node shim on Windows. We rely on Atomics.wait for sync sleep so the
+ * code stays portable across Node and Bun.
  */
 
-import { readFileSync, writeFileSync } from 'node:fs';
+import { readFileSync, writeFileSync, readSync as fsReadSync } from 'node:fs';
 
 import { Interpreter, type Host } from '../src/interpreter.ts';
 import { tokenize } from '../src/lexer.ts';
@@ -81,18 +85,23 @@ class ConsoleHost implements Host {
     return readLineSync();
   }
 
-  pause(ms: number): void { Bun.sleepSync(ms); }
+  pause(ms: number): void {
+    if (ms <= 0) return;
+    // Portable synchronous sleep that works in both Node and Bun without
+    // spawning a child process.
+    const sab = new SharedArrayBuffer(4);
+    const view = new Int32Array(sab);
+    Atomics.wait(view, 0, 0, ms);
+  }
 }
 
-/** Blocking line read from fd 0. Uses Bun's sync FFI for portability. */
+/** Blocking line read from fd 0, portable across Node and Bun. */
 function readLineSync(): string {
   const chunks: number[] = [];
   const buf = new Uint8Array(1);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const fs = require('node:fs');
   while (true) {
     let n = 0;
-    try { n = fs.readSync(0, buf, 0, 1, null); } catch { n = 0; }
+    try { n = fsReadSync(0, buf, 0, 1, null); } catch { n = 0; }
     if (n === 0) break;
     const b = buf[0]!;
     if (b === 0x0a) break;             // \n

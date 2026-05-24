@@ -27,6 +27,14 @@ ci: test typecheck
 build:
     bun run build
 
+# Bundle the CLI to dist/rapira.js (for npm publish / npx rapira)
+cli-build:
+    bun run cli:build
+
+# Dry-run an `npm publish` so you can preview what would ship to the registry
+pack:
+    npm pack --dry-run
+
 # Dev mode: build + watch + serve on http://localhost:10000
 serve: dev
 dev:

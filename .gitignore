@@ -2,6 +2,7 @@ node_modules/
 dist/
 docs/
 build/
+*.tgz
 .DS_Store
 *.log
 bun.lockb

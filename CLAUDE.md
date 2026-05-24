@@ -23,6 +23,8 @@ Project-level notes for future Claude sessions. The TL;DR: this is a faithful in
 | Render turtle output | `bun run cli/index.ts FILE.rap --svg out.svg` |
 | Web dev server | `bun run dev` (port **10000**) |
 | Web production build | `bun run build` → `docs/` (GitHub Pages-ready) |
+| Bundle CLI for npm | `bun run cli:build` → `dist/rapira.js` |
+| Preview npm tarball | `npm pack --dry-run` (or `just pack`) |
 
 ## Layout
 
@@ -41,6 +43,8 @@ src/                     interpreter core — pure, no I/O dependencies
   keywords.ts            bilingual lookup table (Russian-only — "bilingual" is a misnomer left over from earlier; do not add English keywords)
 
 cli/                     Node-backed host: stdin/stdout, NodeFileSystem, SVG renderer
+                         Bundled by scripts/cli-build.ts into dist/rapira.js
+                         for npm publish (`npx rapira FILE.rap`)
 web/                     vanilla DOM + CodeMirror 6 playground
   worker.ts              interpreter in a Web Worker (sync sleep via Atomics.wait)
   lib/                   renderer.ts (canvas), rapira-mode.ts (CodeMirror language + light/dark highlight)
@@ -94,7 +98,11 @@ Records use the international currency sign `¤`. On Soviet КОИ-8 hardware th
 
 ### ПАУЗА
 
-CLI: `Bun.sleepSync(ms)`. Web worker: `Atomics.wait` on a fresh SharedArrayBuffer (valid in worker context, no cross-origin headers needed for same-origin workers). `BufferedHost.pause` records into a `pauses` array so tests assert without sleeping.
+CLI **and** web worker both use `Atomics.wait` on a fresh `SharedArrayBuffer` for portable synchronous sleep — works in Node ≥ 18, Bun, and Web Workers without any cross-origin headers. `BufferedHost.pause` records into a `pauses` array so tests assert without sleeping.
+
+### CLI must work under plain Node, not just Bun
+
+Anything in `cli/` runs in `npx rapira` from Node — no Bun-specific APIs. Don't introduce `Bun.sleepSync`, `Bun.file`, or `Bun.spawn` in `cli/`. The interpreter core in `src/` already avoids these; keep it that way. `scripts/` files run via `bun` so they're free to use Bun APIs.
 
 ### Tests and host hooks
 

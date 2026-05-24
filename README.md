@@ -3,6 +3,7 @@
 A TypeScript / Bun interpreter for **РАПИРА** — the Soviet educational programming language designed in the early 1980s under G. A. Zvenigorodsky as part of the *Школьница* (Shkolnitsa) school computing system for the Агат (Agat) microcomputer.
 
 > **▶ Try it in your browser: <https://begoon.github.io/rapira>**
+> **▶ Run it from your terminal:** `npx rapira examples/factorial.rap`
 
 ```rapira
 ФУНК ФАКТ (Н);
@@ -27,13 +28,33 @@ A TypeScript / Bun interpreter for **РАПИРА** — the Soviet educational p
 - **Snippet test pipeline** (`tests/snippets/`) — `.rap` files diffed against sibling `.expected.txt` / `.expected.svg` on every run of `bun test`.
 - **Чертёжник turtle** — Soviet "Draftsman" executor exposed as ordinary Rapira procedures (`ВПЕРЕД`, `НАЗАД`, `НАПРАВО`, `НАЛЕВО`, `ПЕРО_ВНИЗ`, `ПЕРО_ВВЕРХ`, `ДОМОЙ`, `В_ТОЧКУ`, `КУРС`). Layered on top of the same `GfxEvent` stream as the documented graphics primitives (`ЛИН`, `ПРЯМ`, `ОБЛ`, etc.) so the CLI's SVG renderer and the playground's canvas renderer draw identical output.
 
-## Quick start
+## Install
+
+The CLI ships as a self-contained Node bundle. With Node ≥ 18 you can run it without cloning:
+
+```sh
+npx rapira FILE.rap                           # run a program
+npx rapira FILE.rap --svg out.svg             # capture turtle graphics
+npx rapira                                    # multi-line REPL (Ctrl-D to quit)
+```
+
+Or install globally:
+
+```sh
+npm install -g rapira
+rapira FILE.rap
+```
+
+## Develop
+
+For local development you'll want Bun (it runs the tests and the dev server natively):
 
 ```sh
 bun install
 bun test                                      # 129 tests across 9 files
 bun run cli/index.ts examples/factorial.rap   # ФАКТ(0..7)
 bun run dev                                   # playground on http://localhost:10000
+bun run cli:build                             # bundle the CLI to dist/rapira.js
 ```
 
 If you have [`just`](https://github.com/casey/just) installed, you can use the recipe names — `just test`, `just dev`, `just run examples/turtle_star.rap --svg /tmp/star.svg`, etc.
