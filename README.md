@@ -2,6 +2,8 @@
 
 A TypeScript / Bun interpreter for **РАПИРА** — the Soviet educational programming language designed in the early 1980s under G. A. Zvenigorodsky as part of the *Школьница* (Shkolnitsa) school computing system for the Агат (Agat) microcomputer.
 
+> **▶ Try it in your browser: <https://begoon.github.io/rapira>**
+
 ```rapira
 ФУНК ФАКТ (Н);
    ИМЕНА: Р;
@@ -21,7 +23,7 @@ A TypeScript / Bun interpreter for **РАПИРА** — the Soviet educational p
 
 - **Interpreter core** (`src/`) — lexer, parser, tree-walking evaluator. Faithful to the 1985 Agat dialect: Russian-only keywords, case-insensitive identifiers, `(* … *)` block comments, `;` statement separator, three compound types (tuples `< >`, sets `<* *>`, records `<¤ ¤>`), three-arrow procedure parameter scheme (`name` / `name =>` / `<=> name`), trailing `РЕЗ:` for function results.
 - **CLI** (`cli/`) — `rapira FILE.rap` runs a program, `rapira` drops into a multi-line REPL, `--svg PATH` captures turtle graphics as SVG.
-- **Web playground** (`web/`) — vanilla HTML + CodeMirror 6 + Web Worker, light/dark theme, example selector loading from `tests/snippets/`. Build with `bun build`, output sits in `docs/` ready for GitHub Pages.
+- **Web playground** (`web/`) — vanilla HTML + CodeMirror 6 + Web Worker, light/dark theme, example selector loading from `tests/snippets/`. Build with `bun build`, output sits in `docs/` ready for GitHub Pages. Live at <https://begoon.github.io/rapira>.
 - **Snippet test pipeline** (`tests/snippets/`) — `.rap` files diffed against sibling `.expected.txt` / `.expected.svg` on every run of `bun test`.
 - **Чертёжник turtle** — Soviet "Draftsman" executor exposed as ordinary Rapira procedures (`ВПЕРЕД`, `НАЗАД`, `НАПРАВО`, `НАЛЕВО`, `ПЕРО_ВНИЗ`, `ПЕРО_ВВЕРХ`, `ДОМОЙ`, `В_ТОЧКУ`, `КУРС`). Layered on top of the same `GfxEvent` stream as the documented graphics primitives (`ЛИН`, `ПРЯМ`, `ОБЛ`, etc.) so the CLI's SVG renderer and the playground's canvas renderer draw identical output.
 
