@@ -57,7 +57,7 @@ bun run dev                                   # playground on http://localhost:1
 bun run cli:build                             # bundle the CLI to dist/rapira.js
 ```
 
-If you have [`just`](https://github.com/casey/just) installed, you can use the recipe names — `just test`, `just dev`, `just run examples/turtle_star.rap --svg /tmp/star.svg`, etc.
+If you have [`just`](https://github.com/casey/just) installed, you can use the recipe names — `just test`, `just dev`, `just run examples/turtle_star.rap --svg star.svg`, etc.
 
 ## Examples
 

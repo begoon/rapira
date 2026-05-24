@@ -65,7 +65,7 @@ clean:
 # Run a .rap file through the Rapira CLI
 #   just run examples/factorial.rap
 
-# just run examples/turtle_star.rap --svg /tmp/star.svg
+# just run examples/turtle_star.rap --svg star.svg
 run *ARGS:
     bun run cli/index.ts {{ ARGS }}
 
@@ -74,7 +74,7 @@ repl:
     bun run cli/index.ts
 
 # Render a turtle example as SVG and print where it landed
-turtle EXAMPLE OUT="/tmp/rapira.svg":
+turtle EXAMPLE OUT="rapira.svg":
     bun run cli/index.ts examples/{{ EXAMPLE }}.rap --svg {{ OUT }}
     @echo "→ {{ OUT }}"
 

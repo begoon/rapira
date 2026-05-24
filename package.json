@@ -1,6 +1,6 @@
 {
   "name": "rapira",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "license": "MIT",
   "author": "Alexander Demin <alexander@demin.ws>",
   "description": "Interpreter for РАПИРА — the Soviet educational programming language (1985 Agat dialect).",
