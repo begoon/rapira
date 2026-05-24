@@ -3,7 +3,7 @@
  * Bun-only build + dev server for the web playground.
  *
  *   bun run scripts/web-build.ts            one-shot production build
- *   bun run scripts/web-build.ts --dev      build + watch + serve on :5173
+ *   bun run scripts/web-build.ts --dev      build + watch + serve on :10000
  *
  * Two explicit entrypoints: the HTML page (which pulls in main.ts and the
  * CSS) and the worker module. Outputs sit side-by-side in `docs/` so
@@ -17,7 +17,7 @@ import { basename, join } from 'node:path';
 
 const OUTDIR = 'docs';
 const SNIPPETS_DIR = 'tests/snippets';
-const DEV_PORT = 5173;
+const DEV_PORT = 10000;
 
 const args = process.argv.slice(2);
 const isDev = args.includes('--dev') || args.includes('--watch');

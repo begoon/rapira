@@ -27,7 +27,7 @@ ci: test typecheck
 build:
     bun run build
 
-# Dev mode: build + watch + serve on http://localhost:5173
+# Dev mode: build + watch + serve on http://localhost:10000
 serve: dev
 dev:
     bun run dev
