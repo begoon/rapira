@@ -3,7 +3,8 @@
 A TypeScript / Bun interpreter for **РАПИРА** — the Soviet educational programming language designed in the early 1980s under G. A. Zvenigorodsky as part of the *Школьница* (Shkolnitsa) school computing system for the Агат (Agat) microcomputer.
 
 > **▶ Try it in your browser: <https://begoon.github.io/rapira>**
-> **▶ Run it from your terminal:** `npx rapira examples/factorial.rap`
+
+> **▶ Run it from your terminal:** `npx rapira factorial.rap`
 
 ```rapira
 ФУНК ФАКТ (Н);
