@@ -24,6 +24,11 @@ export interface FileSystem {
   /** Read the next whitespace-delimited token, skipping leading
    *  whitespace and newlines. Returns '' at EOF. */
   readToken(handle: string): string;
+  /** Set the 1-based character position of subsequent reads. Position 1 is
+   *  the first character; values > length put the cursor at EOF. */
+  seek(handle: string, position: number): void;
+  /** Current 1-based character position (1 .. #file + 1). */
+  tell(handle: string): number;
 }
 
 interface FileEntry {
@@ -85,6 +90,20 @@ export class InMemoryFileSystem implements FileSystem {
     const start = h.readPos;
     while (h.readPos < h.contents.length && !/\s/.test(h.contents[h.readPos]!)) h.readPos++;
     return h.contents.slice(start, h.readPos);
+  }
+
+  seek(handle: string, position: number): void {
+    const h = this.handles.get(handle);
+    if (!h) throw new Error(`файл «${handle}» не открыт`);
+    if (position < 1) throw new Error(`ПОЗИЦИЯ должна быть ≥ 1 (получено ${position})`);
+    // Clamp to one past EOF (an explicit EOF marker is fine).
+    h.readPos = Math.min(position - 1, h.contents.length);
+  }
+
+  tell(handle: string): number {
+    const h = this.handles.get(handle);
+    if (!h) throw new Error(`файл «${handle}» не открыт`);
+    return h.readPos + 1;
   }
 
   /** Read out the persisted store (test helper). */

@@ -124,6 +124,23 @@ export class Interpreter {
   constructor(private readonly host: Host) {
     defineNativeFns(this.global);
     registerGraphics(this.global, host.gfx ?? new NullSink());
+    // ПОЗИЦИЯ_В(имя): current 1-based position in the named handle.
+    // Spec §36 only defines a set form; the read form is our addition.
+    this.global.declare('ПОЗИЦИЯ_В', {
+      kind: 'native',
+      name: 'ПОЗИЦИЯ_В',
+      arity: 1,
+      fn: (args): RValue => {
+        const h = args[0];
+        if (!h || h.kind !== 'text') {
+          throw new RuntimeError('ПОЗИЦИЯ_В ожидает текстовое имя файла-метки');
+        }
+        if (!host.fs) {
+          throw new RuntimeError('Файлы недоступны в этой среде исполнения (нет fs у хоста)');
+        }
+        return rInt(host.fs.tell(h.value));
+      },
+    });
   }
 
   run(program: Program): void {
@@ -222,6 +239,16 @@ export class Interpreter {
         const fs = this.requireFs(s.pos);
         try { fs.close(s.handle); }
         catch (e) { throw new RuntimeError(`ЗАКРЫТЬ: ${(e as Error).message}`, s.pos); }
+        return;
+      }
+      case 'FilePosition': {
+        const fs = this.requireFs(s.pos);
+        const v = this.evalExpr(s.value, env);
+        if (v.kind !== 'int') {
+          throw new RuntimeError(`ПОЗИЦИЯ ожидает целое (got ${typeName(v)})`, s.pos);
+        }
+        try { fs.seek(s.handle, v.value); }
+        catch (e) { throw new RuntimeError(`ПОЗИЦИЯ: ${(e as Error).message}`, s.pos); }
         return;
       }
     }

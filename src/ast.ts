@@ -86,8 +86,9 @@ export type Stmt =
   | { kind: 'Exit';   pos: Pos }
   | { kind: 'Run';    pos: Pos }   // ПУСК
   | { kind: 'Empty';  pos: Pos }
-  | { kind: 'FileOpen';  path: Expr; handle: string; pos: Pos }
-  | { kind: 'FileClose'; handle: string; pos: Pos }
+  | { kind: 'FileOpen';     path: Expr; handle: string; pos: Pos }
+  | { kind: 'FileClose';    handle: string; pos: Pos }
+  | { kind: 'FilePosition'; handle: string; value: Expr; pos: Pos }
   | ProcDef
   | FuncDef;
 

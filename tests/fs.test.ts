@@ -69,6 +69,64 @@ describe('File I/O', () => {
     }).toThrow(/недоступны/);
   });
 
+  test('ПОЗИЦИЯ rewinds the read pointer', () => {
+    const r = runWithFs(`
+      ОТКРЫТЬ "in.txt" КАК Ф;
+      ВВОД ИЗ ФАЙЛА Ф ТЕКСТОВ : А;
+      ПОЗИЦИЯ Ф = 1;
+      ВВОД ИЗ ФАЙЛА Ф ТЕКСТОВ : Б;
+      ЗАКРЫТЬ Ф;
+      ? А;
+      ? Б;
+      ? А = Б;
+    `, { 'in.txt': 'one\ntwo\n' });
+    expect(r.out).toBe('one\none\nда\n');
+  });
+
+  test('ПОЗИЦИЯ jumps to mid-file offset', () => {
+    // "abcdefghij" — position 4 puts us at 'd'.
+    const r = runWithFs(`
+      ОТКРЫТЬ "abc.txt" КАК Ф;
+      ПОЗИЦИЯ Ф = 4;
+      ВВОД ИЗ ФАЙЛА Ф ТЕКСТОВ : С;
+      ЗАКРЫТЬ Ф;
+      ? С;
+    `, { 'abc.txt': 'abcdefghij' });
+    expect(r.out).toBe('defghij\n');
+  });
+
+  test('ПОЗИЦИЯ_В() reports current 1-based position', () => {
+    const r = runWithFs(`
+      ОТКРЫТЬ "in.txt" КАК Ф;
+      ? ПОЗИЦИЯ_В("Ф");
+      ВВОД ИЗ ФАЙЛА Ф ТЕКСТОВ : С;
+      ? ПОЗИЦИЯ_В("Ф");
+      ПОЗИЦИЯ Ф = 1;
+      ? ПОЗИЦИЯ_В("Ф");
+      ЗАКРЫТЬ Ф;
+    `, { 'in.txt': 'abc\ndef\n' });
+    // start → 1; after reading "abc\n" (4 chars) → 5; after seek to 1 → 1
+    expect(r.out).toBe('1\n5\n1\n');
+  });
+
+  test('ПОЗИЦИЯ past EOF clamps and yields empty reads', () => {
+    const r = runWithFs(`
+      ОТКРЫТЬ "in.txt" КАК Ф;
+      ПОЗИЦИЯ Ф = 9999;
+      ВВОД ИЗ ФАЙЛА Ф ТЕКСТОВ : С;
+      ЗАКРЫТЬ Ф;
+      ? С = "";
+    `, { 'in.txt': 'hi' });
+    expect(r.out).toBe('да\n');
+  });
+
+  test('ПОЗИЦИЯ rejects 0 and negative', () => {
+    expect(() => runWithFs(`
+      ОТКРЫТЬ "x" КАК Ф;
+      ПОЗИЦИЯ Ф = 0;
+    `)).toThrow(/≥ 1/);
+  });
+
   test('reading from EOF yields .пусто for ДАННЫХ', () => {
     const r = runWithFs(`
       ОТКРЫТЬ "empty.txt" КАК Ф;

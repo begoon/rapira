@@ -92,8 +92,9 @@ class Parser {
       case 'STOP':    this.advance(); return { kind: 'Stop', pos: t.pos };
       case 'EXIT':    this.advance(); return { kind: 'Exit', pos: t.pos };
       case 'RUN':     this.advance(); return { kind: 'Run',  pos: t.pos };
-      case 'OPEN':    return this.parseFileOpen();
-      case 'CLOSE':   return this.parseFileClose();
+      case 'OPEN':     return this.parseFileOpen();
+      case 'CLOSE':    return this.parseFileClose();
+      case 'POSITION': return this.parseFilePosition();
       case 'SEMI':    // empty statement
         return { kind: 'Empty', pos: t.pos };
     }
@@ -370,6 +371,15 @@ class Parser {
     const start = this.eat('CLOSE').pos;
     const handle = this.normalizedIdent('file handle');
     return { kind: 'FileClose', handle, pos: start };
+  }
+
+  /** ПОЗИЦИЯ имя = выражение */
+  private parseFilePosition(): Stmt {
+    const start = this.eat('POSITION').pos;
+    const handle = this.normalizedIdent('file handle');
+    this.eat('EQ', '"=" in ПОЗИЦИЯ');
+    const value = this.parseExpression();
+    return { kind: 'FilePosition', handle, value, pos: start };
   }
 
   /** expect an identifier and return its canonical (upper-case) form. */

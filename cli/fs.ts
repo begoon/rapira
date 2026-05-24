@@ -58,6 +58,19 @@ export class NodeFileSystem implements FileSystem {
     return h.contents.slice(start, h.readPos);
   }
 
+  seek(handle: string, position: number): void {
+    const h = this.handles.get(handle);
+    if (!h) throw new Error(`файл «${handle}» не открыт`);
+    if (position < 1) throw new Error(`ПОЗИЦИЯ должна быть ≥ 1 (получено ${position})`);
+    h.readPos = Math.min(position - 1, h.contents.length);
+  }
+
+  tell(handle: string): number {
+    const h = this.handles.get(handle);
+    if (!h) throw new Error(`файл «${handle}» не открыт`);
+    return h.readPos + 1;
+  }
+
   /** Flush and release every open handle (call on process exit). */
   closeAll(): void {
     for (const handle of this.handles.keys()) this.close(handle);
