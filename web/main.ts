@@ -87,7 +87,13 @@ function applyTheme(theme: Theme): void {
   document.documentElement.dataset.theme = theme;
   themeSel.value = theme;
   localStorage.setItem(THEME_KEY, theme);
-  editorTheme.reconfigure(makeEditorExtensions(theme));
+  // Compartment.reconfigure returns a StateEffect — it has to be dispatched
+  // onto the live EditorView for the swap to take effect. (`view` may not
+  // exist yet on the very first `applyTheme` call during init; the editor
+  // is constructed with the initial extensions inline, so we skip then.)
+  if (view) {
+    view.dispatch({ effects: editorTheme.reconfigure(makeEditorExtensions(theme)) });
+  }
 }
 
 function makeEditorExtensions(theme: Theme): import('@codemirror/state').Extension {
@@ -111,8 +117,18 @@ const editorTheme = new Compartment();
 let worker: Worker | undefined;
 let debounceTimer: ReturnType<typeof setTimeout> | undefined;
 
+function clearCanvas(): void {
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return;
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+}
+
 function runOnce(source: string): void {
   if (worker) worker.terminate();
+  // Reset the canvas immediately so previous turtle output doesn't linger
+  // while the next run is in flight (or if the next run produces no gfx).
+  clearCanvas();
   worker = new Worker(new URL('./worker.js', import.meta.url), { type: 'module' });
   worker.onmessage = (e: MessageEvent<WorkerOut>): void => {
     const r = e.data;
@@ -122,6 +138,7 @@ function runOnce(source: string): void {
       renderEvents(canvas, r.gfx);
     } else {
       canvasHost.hidden = true;
+      // canvas already cleared above; nothing else to do
     }
     if (r.kind === 'done') {
       setStatus(`выполнено за ${r.durationMs} мс`);
@@ -142,7 +159,8 @@ function scheduleRun(source: string): void {
 
 // ---- CodeMirror editor ----
 
-const view = new EditorView({
+let view: EditorView | undefined;
+view = new EditorView({
   state: EditorState.create({
     doc: SAMPLE,
     extensions: [
@@ -162,6 +180,7 @@ const view = new EditorView({
 });
 
 function replaceDocument(text: string): void {
+  if (!view) return;
   view.dispatch({ changes: { from: 0, to: view.state.doc.length, insert: text } });
 }
 
