@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256" shape-rendering="crispEdges">
+<rect width="100%" height="100%" fill="#ffffff"/>
+<line x1="128" y1="128" x2="128" y2="78" stroke="#61a13e" stroke-width="1"/>
+<line x1="128" y1="78" x2="178" y2="78" stroke="#61a13e" stroke-width="1"/>
+<line x1="178" y1="78" x2="178" y2="128" stroke="#61a13e" stroke-width="1"/>
+<line x1="178" y1="128" x2="128" y2="128" stroke="#61a13e" stroke-width="1"/>
+</svg>
