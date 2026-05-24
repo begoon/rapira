@@ -45,10 +45,10 @@ export interface OutputItem { expr: Expr; width: Expr | null; precision: Expr | 
 export type OutputDirection =
   | { kind: 'screen' }
   | { kind: 'paper' }
-  | { kind: 'file'; name: Expr };
+  | { kind: 'file'; handle: string };
 export type InputDirection =
   | { kind: 'console' }
-  | { kind: 'file'; name: Expr }
+  | { kind: 'file'; handle: string }
   | { kind: 'dzu' };
 export type InputMode = 'default' | 'texts' | 'data';
 
@@ -86,6 +86,8 @@ export type Stmt =
   | { kind: 'Exit';   pos: Pos }
   | { kind: 'Run';    pos: Pos }   // ПУСК
   | { kind: 'Empty';  pos: Pos }
+  | { kind: 'FileOpen';  path: Expr; handle: string; pos: Pos }
+  | { kind: 'FileClose'; handle: string; pos: Pos }
   | ProcDef
   | FuncDef;
 

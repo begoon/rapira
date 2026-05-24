@@ -14,6 +14,7 @@ import {
 import { RuntimeError, type Pos } from './errors.ts';
 import { type GraphicsSink, NullSink, BufferingSink } from './graphics.ts';
 import { registerGraphics } from './stdlib/gfx.ts';
+import { type FileSystem, InMemoryFileSystem } from './fs.ts';
 
 // ---- Host interface ----
 
@@ -26,12 +27,15 @@ export interface Host {
   readLine(): string;
   /** Graphics sink; defaults to a no-op for hosts without graphics. */
   gfx?: GraphicsSink;
+  /** File system; omit to disable file I/O (web playground). */
+  fs?: FileSystem;
 }
 
 export class BufferedHost implements Host {
   out = '';
   inputLines: string[] = [];
   gfx: BufferingSink = new BufferingSink();
+  fs: InMemoryFileSystem = new InMemoryFileSystem();
   write(s: string): void { this.out += s; }
   writeln(): void { this.out += '\n'; }
   readLine(): string { return this.inputLines.shift() ?? ''; }
@@ -204,7 +208,30 @@ export class Interpreter {
           env.declare(s.name, v);
         }
         return;
+      case 'FileOpen': {
+        const fs = this.requireFs(s.pos);
+        const path = this.evalExpr(s.path, env);
+        if (path.kind !== 'text') {
+          throw new RuntimeError(`ОТКРЫТЬ ожидает текстовый путь (got ${typeName(path)})`, s.pos);
+        }
+        try { fs.open(path.value, s.handle); }
+        catch (e) { throw new RuntimeError(`ОТКРЫТЬ: ${(e as Error).message}`, s.pos); }
+        return;
+      }
+      case 'FileClose': {
+        const fs = this.requireFs(s.pos);
+        try { fs.close(s.handle); }
+        catch (e) { throw new RuntimeError(`ЗАКРЫТЬ: ${(e as Error).message}`, s.pos); }
+        return;
+      }
     }
+  }
+
+  private requireFs(pos: Pos): FileSystem {
+    if (!this.host.fs) {
+      throw new RuntimeError('Файлы недоступны в этой среде исполнения (нет fs у хоста)', pos);
+    }
+    return this.host.fs;
   }
 
   private evalLoop(header: LoopHeader, body: Stmt[], env: Env): void {
@@ -270,27 +297,49 @@ export class Interpreter {
       const p = it.precision ? this.toIntOrNull(this.evalExpr(it.precision, env)) : null;
       parts.push(displayFormatted(v, w, p));
     }
+    const text = parts.join('') + (s.suppressNewline ? '' : '\n');
+    if (s.direction.kind === 'file') {
+      const fs = this.requireFs(s.pos);
+      try { fs.writeText(s.direction.handle, text); }
+      catch (e) { throw new RuntimeError(`ВЫВОД В ФАЙЛ: ${(e as Error).message}`, s.pos); }
+      return;
+    }
+    if (s.direction.kind === 'paper') {
+      // No printer in this implementation — fall back to stdout with a marker
+      this.host.write(text);
+      return;
+    }
     this.host.write(parts.join(''));
     if (!s.suppressNewline) this.host.writeln();
   }
 
   private evalInput(s: Stmt & { kind: 'Input' }, env: Env): void {
-    // Simple line-based reader for MVP. `ВВОД ТЕКСТОВ:` reads whole lines into
-    // each target. Default and `ВВОД ДАННЫХ:` read whitespace-separated tokens
-    // and try to parse as numbers, else fall back to text.
+    // Source-of-bytes: console or open file. The web playground has neither
+    // stdin nor an fs, so all branches do The Right Thing when missing.
+    const readLine = s.direction.kind === 'file'
+      ? ((): string => this.requireFs(s.pos).readLine(s.direction.kind === 'file' ? s.direction.handle : ''))
+      : ((): string => this.host.readLine());
+
     if (s.mode === 'texts') {
-      for (const t of s.targets) this.evalAssign(t, rText(this.host.readLine()), env, s.pos);
+      for (const t of s.targets) this.evalAssign(t, rText(readLine()), env, s.pos);
       return;
     }
     let tokens: string[] = [];
     const nextToken = (): string => {
-      while (tokens.length === 0) tokens = this.host.readLine().split(/\s+/).filter(Boolean);
+      while (tokens.length === 0) {
+        const line = readLine();
+        if (line === '' && s.direction.kind === 'file') return ''; // EOF
+        tokens = line.split(/\s+/).filter(Boolean);
+        if (tokens.length === 0 && s.direction.kind === 'console') continue;
+        if (tokens.length === 0) return '';
+      }
       return tokens.shift()!;
     };
     for (const t of s.targets) {
       const tok = nextToken();
       let v: RValue;
-      if (/^-?\d+$/.test(tok))                  v = rInt(parseInt(tok, 10));
+      if (tok === '')                           v = EMPTY;
+      else if (/^-?\d+$/.test(tok))             v = rInt(parseInt(tok, 10));
       else if (/^-?\d+(\.\d+)?([eEЕе][+-]?\d+)?$/.test(tok)) {
         v = rReal(parseFloat(tok.replace(/[Ее]/g, 'e')));
       } else                                    v = rText(tok);

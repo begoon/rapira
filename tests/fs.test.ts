@@ -1,0 +1,119 @@
+import { describe, test, expect } from 'bun:test';
+import { Interpreter, BufferedHost } from '../src/interpreter.ts';
+import { tokenize } from '../src/lexer.ts';
+import { parse } from '../src/parser.ts';
+import { InMemoryFileSystem } from '../src/fs.ts';
+
+function runWithFs(src: string, initialFiles: Record<string, string> = {}): { out: string; fs: InMemoryFileSystem } {
+  const host = new BufferedHost();
+  host.fs = new InMemoryFileSystem(initialFiles);
+  const interp = new Interpreter(host);
+  interp.run(parse(tokenize(src)));
+  return { out: host.out, fs: host.fs };
+}
+
+describe('File I/O', () => {
+  test('ОТКРЫТЬ + ВЫВОД В ФАЙЛ + ЗАКРЫТЬ writes to the file', () => {
+    const r = runWithFs(`
+      ОТКРЫТЬ "out.txt" КАК Ф;
+      ВЫВОД В ФАЙЛ Ф : "первая строка";
+      ВЫВОД В ФАЙЛ Ф : "вторая строка";
+      ЗАКРЫТЬ Ф;
+    `);
+    expect(r.fs.snapshot().get('out.txt')).toBe('первая строка\nвторая строка\n');
+  });
+
+  test('ВВОД ИЗ ФАЙЛА ТЕКСТОВ reads whole lines', () => {
+    const r = runWithFs(`
+      ОТКРЫТЬ "in.txt" КАК Ф;
+      ВВОД ИЗ ФАЙЛА Ф ТЕКСТОВ : А;
+      ВВОД ИЗ ФАЙЛА Ф ТЕКСТОВ : Б;
+      ЗАКРЫТЬ Ф;
+      ? А;
+      ? Б;
+    `, { 'in.txt': 'привет\nмир\n' });
+    expect(r.out).toBe('привет\nмир\n');
+  });
+
+  test('ВВОД ИЗ ФАЙЛА ДАННЫХ tokenises and detects numbers', () => {
+    const r = runWithFs(`
+      ОТКРЫТЬ "nums.txt" КАК Ф;
+      ВВОД ИЗ ФАЙЛА Ф ДАННЫХ : А, Б, В;
+      ЗАКРЫТЬ Ф;
+      ? А + Б + В;
+    `, { 'nums.txt': '10 20 12\n' });
+    expect(r.out).toBe('42\n');
+  });
+
+  test('round trip: write then read back through the same FileSystem', () => {
+    const r = runWithFs(`
+      ОТКРЫТЬ "rt.txt" КАК Ф;
+      ВЫВОД В ФАЙЛ Ф БПС : "hello world";
+      ЗАКРЫТЬ Ф;
+
+      ОТКРЫТЬ "rt.txt" КАК Ф;
+      ВВОД ИЗ ФАЙЛА Ф ТЕКСТОВ : С;
+      ЗАКРЫТЬ Ф;
+      ? С;
+    `);
+    expect(r.out).toBe('hello world\n');
+  });
+
+  test('file I/O without an fs host throws cleanly (web case)', () => {
+    const host = new BufferedHost();
+    // Simulate the web worker host: no fs.
+    (host as { fs?: InMemoryFileSystem }).fs = undefined;
+    const interp = new Interpreter(host);
+    expect(() => {
+      interp.run(parse(tokenize('ОТКРЫТЬ "x.txt" КАК Ф;')));
+    }).toThrow(/недоступны/);
+  });
+
+  test('reading from EOF yields .пусто for ДАННЫХ', () => {
+    const r = runWithFs(`
+      ОТКРЫТЬ "empty.txt" КАК Ф;
+      ВВОД ИЗ ФАЙЛА Ф ДАННЫХ : Х;
+      ЗАКРЫТЬ Ф;
+      ? Х = .пусто;
+    `, { 'empty.txt': '' });
+    expect(r.out).toBe('да\n');
+  });
+});
+
+describe('Output formatters', () => {
+  function run(src: string): string {
+    const host = new BufferedHost();
+    const interp = new Interpreter(host);
+    interp.run(parse(tokenize(src)));
+    return host.out;
+  }
+
+  test('precision on real', () => {
+    expect(run('? 3.14159 : 0 : 2;')).toBe('3.14\n');
+  });
+
+  test('width + precision pads with spaces', () => {
+    expect(run('? 3.14 : 8 : 2;')).toBe('    3.14\n');
+  });
+
+  test('width on integer right-aligns', () => {
+    expect(run('? 42 : 5;')).toBe('   42\n');
+  });
+
+  test('width on text right-aligns', () => {
+    expect(run('? "хи" : 5;')).toBe('   хи\n');
+  });
+
+  test('precision 0 on real rounds to integer-shaped string', () => {
+    expect(run('? 3.7 : 0 : 0;')).toBe('4\n');
+  });
+
+  test('precision on integer applies toFixed', () => {
+    expect(run('? 42 : 0 : 3;')).toBe('42.000\n');
+  });
+
+  test('mixed items keep their per-item formatting', () => {
+    expect(run('? 1 : 3, " ", 2 : 3, " ", 3.14 : 6 : 2;'))
+      .toBe('  1   2   3.14\n');
+  });
+});

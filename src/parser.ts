@@ -92,6 +92,8 @@ class Parser {
       case 'STOP':    this.advance(); return { kind: 'Stop', pos: t.pos };
       case 'EXIT':    this.advance(); return { kind: 'Exit', pos: t.pos };
       case 'RUN':     this.advance(); return { kind: 'Run',  pos: t.pos };
+      case 'OPEN':    return this.parseFileOpen();
+      case 'CLOSE':   return this.parseFileClose();
       case 'SEMI':    // empty statement
         return { kind: 'Empty', pos: t.pos };
     }
@@ -304,8 +306,7 @@ class Parser {
         else throw new ParseError('Expected ЭКРАН or БУМАГУ after НА', this.peek().pos);
       } else if (this.match('IN_DIR')) { // В
         this.match('FILE'); // optional ФАЙЛ
-        const name = this.parseExpression();
-        direction = { kind: 'file', name };
+        direction = { kind: 'file', handle: this.normalizedIdent('file handle') };
       }
       if (this.match('NLF')) suppress = true;
       this.eat('COLON', '":" before output items');
@@ -331,8 +332,7 @@ class Parser {
     let mode: InputMode = 'default';
     if (this.match('OF')) { // ИЗ
       if (this.match('FILE_GEN')) {
-        const name = this.parseExpression();
-        direction = { kind: 'file', name };
+        direction = { kind: 'file', handle: this.normalizedIdent('file handle') };
       } else if (this.match('DZU')) {
         direction = { kind: 'dzu' };
       } else {
@@ -351,6 +351,30 @@ class Parser {
     const start = this.eat('CONTROL').pos;
     const cond = this.parseExpression();
     return { kind: 'Control', cond, pos: start };
+  }
+
+  /**
+   * ОТКРЫТЬ путь КАК имя       — open a file at `путь`, label as `имя`
+   * (the optional-path form `ОТКРЫТЬ имя` is not supported)
+   */
+  private parseFileOpen(): Stmt {
+    const start = this.eat('OPEN').pos;
+    const path = this.parseExpression();
+    this.eat('AS', 'КАК');
+    const handle = this.normalizedIdent('file handle');
+    return { kind: 'FileOpen', path, handle, pos: start };
+  }
+
+  /** ЗАКРЫТЬ имя */
+  private parseFileClose(): Stmt {
+    const start = this.eat('CLOSE').pos;
+    const handle = this.normalizedIdent('file handle');
+    return { kind: 'FileClose', handle, pos: start };
+  }
+
+  /** expect an identifier and return its canonical (upper-case) form. */
+  private normalizedIdent(what: string): string {
+    return normalize(this.expectIdent(what));
   }
 
   // ---- assignment / call ----

@@ -348,9 +348,31 @@ Hosts (CLI → SVG; web → `<canvas>`) consume the stream. The Agat colour pale
 
 Default canvas is 256 × 256 (Агат-7 high-res), origin top-left, y-down — the host normalises Agat's bottom-left native convention.
 
+## File I/O
+
+`ОТКРЫТЬ` and `ЗАКРЫТЬ` plus the file-directed forms of `ВЫВОД` and `ВВОД` are supported through an optional `FileSystem` capability on the Host:
+
+```rapira
+ОТКРЫТЬ "data.txt" КАК Ф;        (* path → handle *)
+ВЫВОД В ФАЙЛ Ф : "первая строка";
+ВЫВОД В ФАЙЛ Ф : "вторая строка";
+ЗАКРЫТЬ Ф;
+
+ОТКРЫТЬ "data.txt" КАК Ф;
+ВВОД ИЗ ФАЙЛА Ф ТЕКСТОВ : А, Б;  (* читаем построчно *)
+ЗАКРЫТЬ Ф;
+```
+
+Handle identifiers are normalised to upper-case at parse time (so `Ф` and `ф` refer to the same handle). `ВВОД ИЗ ФАЙЛА … ДАННЫХ : …` tokenises and auto-detects integers / reals / text per token. Reading past EOF yields `.пусто` for `ДАННЫХ` mode and the empty text for `ТЕКСТОВ`.
+
+The non-essential file ops (`ПОЗИЦИЯ`, `ЗАПЕРЕТЬ`, `ОТПЕРЕТЬ`, `СТЕРЕТЬ`) are reserved keywords but not yet implemented.
+
+**Host capability**: The CLI host (`cli/index.ts` → `cli/fs.ts`) provides `NodeFileSystem` backed by `node:fs`. The web playground host omits `fs` entirely, so any file op throws `Файлы недоступны в этой среде исполнения` — keeps the playground sandboxed. Tests use `InMemoryFileSystem` from `src/fs.ts`.
+
 ## Deferred from MVP
 
-- File I/O (`ОТКРЫТЬ`, `ЗАКРЫТЬ`, `ВВОД ИЗ ФАЙЛА`, …) — parsed, then rejected at runtime
 - Modules (`СТАРТ`, `ФИНИШ`, `ДОСТУПНО`, `МОДУЛЬ`)
 - Robic-mode predicate sets (`'[' … ']'` blocks)
-- Output formatters (`:width:precision`) — parsed, formatting deferred to a simple default
+- File-state operators `ПОЗИЦИЯ`, `ЗАПЕРЕТЬ`, `ОТПЕРЕТЬ`, `СТЕРЕТЬ`
+- `ВВОД ИЗ ДЗУ` (DZU = disk-storage; not modelled)
+- `НА БУМАГУ` printer direction (currently falls back to stdout)

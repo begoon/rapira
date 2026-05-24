@@ -18,6 +18,7 @@ import { parse } from '../src/parser.ts';
 import { BufferingSink, type GraphicsSink } from '../src/graphics.ts';
 import { RapiraError } from '../src/errors.ts';
 import { eventsToSvg } from './svg.ts';
+import { NodeFileSystem } from './fs.ts';
 
 interface Args {
   file: string | null;
@@ -64,6 +65,7 @@ function die(msg: string): never {
 
 class ConsoleHost implements Host {
   gfx: GraphicsSink;
+  fs: NodeFileSystem = new NodeFileSystem();
   private inputBuffer: string[] = [];
 
   constructor(gfx: GraphicsSink) { this.gfx = gfx; }
@@ -127,6 +129,8 @@ function runFile(path: string, args: Args): void {
   } catch (e) {
     reportError(e, source, path);
     process.exit(1);
+  } finally {
+    host.fs.closeAll(); // flush any files left open by the program
   }
   if (gfx && args.svgOut) {
     writeFileSync(args.svgOut, eventsToSvg(gfx.events));
