@@ -74,7 +74,7 @@ If you have [`just`](https://github.com/casey/just) installed, you can use the r
 ## Documentation
 
 - [`SPEC.md`](./SPEC.md) — the implementation contract: lexical structure, statements, operators, built-ins, what's done vs. honestly deferred.
-- [`RAPIRA.MD`](./RAPIRA.MD) — the canonical 1985 spec (Фг.00031-01 35 01) reformatted to Markdown from the [agatcomp.ru KOI-8 source](https://agatcomp.ru/agat/Software/Other/ebooks-IKP-KPON/IKP/800.9/rapira/docs/RAPIRAopisanie_jazyka.shtml).
+- [`RAPIRA.md`](./RAPIRA.md) — the canonical 1985 spec (Фг.00031-01 35 01) reformatted to Markdown from the [agatcomp.ru KOI-8 source](https://agatcomp.ru/agat/Software/Other/ebooks-IKP-KPON/IKP/800.9/rapira/docs/RAPIRAopisanie_jazyka.shtml).
 - [`CLAUDE.md`](./CLAUDE.md) — onboarding notes for working on this codebase.
 
 ## License
