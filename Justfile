@@ -35,6 +35,22 @@ cli-build:
 pack:
     npm pack --dry-run
 
+# ── npm publish ────────────────────────────────────────────────────────────
+
+# Bump patch version and publish (matches the asm8 convention).
+# prepublishOnly re-runs cli:build + bun test as a safety net.
+publish: test
+    npm version patch --no-git-tag-version
+    npm publish
+
+publish-minor: test
+    npm version minor --no-git-tag-version
+    npm publish
+
+publish-major: test
+    npm version major --no-git-tag-version
+    npm publish
+
 # Dev mode: build + watch + serve on http://localhost:10000
 serve: dev
 dev:
