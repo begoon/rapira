@@ -12,7 +12,7 @@
  * at this directory on `main` to deploy.
  */
 
-import { watch, rmSync, mkdirSync, readdirSync, copyFileSync, readFileSync, writeFileSync } from 'node:fs';
+import { watch, rmSync, mkdirSync, readdirSync, copyFileSync, readFileSync, writeFileSync, closeSync, openSync } from 'node:fs';
 import { basename, join } from 'node:path';
 
 const OUTDIR = 'docs';
@@ -68,6 +68,11 @@ async function build(): Promise<boolean> {
     console.error('build failed');
     return false;
   }
+
+  // Touch a .nojekyll marker so GitHub Pages serves files starting with `_`
+  // verbatim and skips its Jekyll wrapper, regardless of how the user has
+  // configured the Pages source.
+  closeSync(openSync(join(OUTDIR, '.nojekyll'), 'w'));
 
   // Copy example snippets (.rap files) and emit an index.json the
   // playground can fetch to populate the example selector.
