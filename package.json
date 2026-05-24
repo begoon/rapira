@@ -1,0 +1,20 @@
+{
+  "name": "rapira",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Interpreter and playground for Rapira (Рапира), the Soviet educational programming language",
+  "module": "src/index.ts",
+  "bin": {
+    "rapira": "./cli/index.ts"
+  },
+  "scripts": {
+    "test": "bun test",
+    "cli": "bun run cli/index.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "typescript": "^5.6.0"
+  }
+}
