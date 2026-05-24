@@ -2,6 +2,8 @@
   "name": "rapira",
   "version": "0.0.0",
   "private": true,
+  "license": "MIT",
+  "author": "Alexander Demin <alexander@demin.ws>",
   "type": "module",
   "description": "Interpreter and playground for Rapira (Рапира), the Soviet educational programming language",
   "module": "src/index.ts",
