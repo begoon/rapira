@@ -36,8 +36,8 @@ pack:
     npm pack --dry-run
 
 # ── npm publish ────────────────────────────────────────────────────────────
-
 # Bump patch version and publish (matches the asm8 convention).
+
 # prepublishOnly re-runs cli:build + bun test as a safety net.
 publish: test
     npm version patch --no-git-tag-version
@@ -53,6 +53,7 @@ publish-major: test
 
 # Dev mode: build + watch + serve on http://localhost:10000
 serve: dev
+
 dev:
     bun run dev
 
@@ -61,12 +62,12 @@ clean:
     rm -rf docs/
 
 # ── CLI ────────────────────────────────────────────────────────────────────
-
 # Run a .rap file through the Rapira CLI
 #   just run examples/factorial.rap
-#   just run examples/turtle_star.rap --svg /tmp/star.svg
+
+# just run examples/turtle_star.rap --svg /tmp/star.svg
 run *ARGS:
-    bun run cli/index.ts {{ARGS}}
+    bun run cli/index.ts {{ ARGS }}
 
 # Start the Rapira REPL
 repl:
@@ -74,10 +75,10 @@ repl:
 
 # Render a turtle example as SVG and print where it landed
 turtle EXAMPLE OUT="/tmp/rapira.svg":
-    bun run cli/index.ts examples/{{EXAMPLE}}.rap --svg {{OUT}}
-    @echo "→ {{OUT}}"
+    bun run cli/index.ts examples/{{ EXAMPLE }}.rap --svg {{ OUT }}
+    @echo "→ {{ OUT }}"
 
-# ── deps ───────────────────────────────────────────────────────────────────
+# ─────────────────────────────────────────────────────────────────────
 
 # Reinstall dependencies from scratch
 install:
